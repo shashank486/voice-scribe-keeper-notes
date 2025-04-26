@@ -3,24 +3,37 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
-import { Mic, MicOff, Save } from "lucide-react";
+import { Mic, MicOff, Save, Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import NoteEditor from "./NoteEditor";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { SPEECH_LANGUAGES } from "@/types";
 
 interface VoiceRecorderProps {
   onNoteSaved: () => void;
+  onSearch: (query: string) => void;
 }
 
-const VoiceRecorder = ({ onNoteSaved }: VoiceRecorderProps) => {
+const VoiceRecorder = ({ onNoteSaved, onSearch }: VoiceRecorderProps) => {
   const [showEditor, setShowEditor] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { 
     transcript, 
     isListening, 
     error, 
     startListening, 
     stopListening, 
-    resetTranscript 
+    resetTranscript,
+    language,
+    setLanguage
   } = useSpeechRecognition();
 
   const handleStartRecording = () => {
@@ -50,13 +63,35 @@ const VoiceRecorder = ({ onNoteSaved }: VoiceRecorderProps) => {
     onNoteSaved();
   };
 
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSearch(searchQuery);
+  };
+
   return (
     <>
       <Card className="p-4 mb-8">
         <div className="flex flex-col space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center flex-wrap gap-2">
             <h2 className="text-xl font-semibold">Voice Notes</h2>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <Select value={language} onValueChange={handleLanguageChange}>
+                <SelectTrigger className="w-[140px] md:w-[180px]">
+                  <SelectValue placeholder="Language" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SPEECH_LANGUAGES.map(lang => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      {lang.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               {isListening ? (
                 <Button 
                   onClick={handleStopRecording}
@@ -64,7 +99,7 @@ const VoiceRecorder = ({ onNoteSaved }: VoiceRecorderProps) => {
                   className="gap-2"
                 >
                   <MicOff size={18} />
-                  Stop Recording
+                  Stop
                 </Button>
               ) : (
                 <Button 
@@ -73,11 +108,22 @@ const VoiceRecorder = ({ onNoteSaved }: VoiceRecorderProps) => {
                   className="gap-2"
                 >
                   <Mic size={18} />
-                  Start Recording
+                  Record
                 </Button>
               )}
             </div>
           </div>
+
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <Input
+              placeholder="Search notes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <Button type="submit" variant="outline">
+              <Search size={18} />
+            </Button>
+          </form>
           
           {error && (
             <Alert variant="destructive" className="mb-4">
@@ -95,7 +141,7 @@ const VoiceRecorder = ({ onNoteSaved }: VoiceRecorderProps) => {
               </div>
             )}
             <p className="whitespace-pre-wrap break-words">
-              {transcript || (isListening ? "Speak now..." : "Click 'Start Recording' and begin speaking...")}
+              {transcript || (isListening ? "Speak now..." : "Click 'Record' and begin speaking...")}
             </p>
           </div>
           
@@ -119,6 +165,7 @@ const VoiceRecorder = ({ onNoteSaved }: VoiceRecorderProps) => {
           </DialogHeader>
           <NoteEditor
             initialContent={transcript}
+            initialLanguage={language}
             onSaved={handleNoteSaved}
             onCancel={handleEditorClose}
           />

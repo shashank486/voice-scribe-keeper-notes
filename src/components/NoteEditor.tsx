@@ -1,15 +1,25 @@
 
-import { useState } from "react";
-import { Note } from "@/types";
+import { useState, useEffect } from "react";
+import { Note, CATEGORIES, SPEECH_LANGUAGES } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { saveNote, updateNote } from "@/lib/store";
+import { saveNote, updateNote, generateTitle } from "@/lib/store";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface NoteEditorProps {
   initialNote?: Note;
   initialContent?: string;
+  initialLanguage?: string;
   onSaved: () => void;
   onCancel: () => void;
 }
@@ -17,13 +27,25 @@ interface NoteEditorProps {
 const NoteEditor = ({ 
   initialNote, 
   initialContent = "", 
+  initialLanguage = "en-US",
   onSaved, 
   onCancel 
 }: NoteEditorProps) => {
   const { toast } = useToast();
   const [title, setTitle] = useState(initialNote?.title || "");
   const [content, setContent] = useState(initialNote?.content || initialContent);
+  const [category, setCategory] = useState(initialNote?.category || "Other");
+  const [isPinned, setIsPinned] = useState(initialNote?.isPinned || false);
+  const [language, setLanguage] = useState(initialNote?.language || initialLanguage);
   const isEditing = !!initialNote;
+
+  // Auto-generate title when content changes and no title has been manually set
+  useEffect(() => {
+    if (!isEditing && content && !title) {
+      const generatedTitle = generateTitle(content);
+      setTitle(generatedTitle);
+    }
+  }, [content, isEditing, title]);
 
   const handleSave = () => {
     if (!title.trim()) {
@@ -45,13 +67,13 @@ const NoteEditor = ({
     }
 
     if (isEditing && initialNote) {
-      updateNote(initialNote.id, { title, content });
+      updateNote(initialNote.id, { title, content, category, isPinned, language });
       toast({
         title: "Note updated",
         description: "Your changes have been saved"
       });
     } else {
-      saveNote({ title, content });
+      saveNote({ title, content, category, isPinned, language });
       toast({
         title: "Note saved",
         description: "Your new note has been created"
@@ -59,6 +81,14 @@ const NoteEditor = ({
     }
     
     onSaved();
+  };
+
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setCategory(value);
   };
 
   return (
@@ -78,6 +108,46 @@ const NoteEditor = ({
           onChange={(e) => setContent(e.target.value)}
         />
       </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between items-center">
+          <Label htmlFor="category">Category</Label>
+          <Select value={category} onValueChange={handleCategoryChange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <Label htmlFor="language">Language</Label>
+          <Select value={language} onValueChange={handleLanguageChange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select language" />
+            </SelectTrigger>
+            <SelectContent>
+              {SPEECH_LANGUAGES.map((lang) => (
+                <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <Label htmlFor="pin-note">Pin this note</Label>
+          <Switch
+            id="pin-note"
+            checked={isPinned}
+            onCheckedChange={setIsPinned}
+          />
+        </div>
+      </div>
+
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={onCancel}>
           Cancel

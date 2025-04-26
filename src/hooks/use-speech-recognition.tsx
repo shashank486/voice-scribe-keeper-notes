@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 
 // Declare the SpeechRecognition interface for TypeScript
@@ -31,6 +32,9 @@ interface SpeechRecognitionHook {
   stopListening: () => void;
   resetTranscript: () => void;
   setTranscript: (text: string) => void;
+  language: string;
+  setLanguage: (lang: string) => void;
+  supportedLanguages: string[];
 }
 
 export const useSpeechRecognition = (): SpeechRecognitionHook => {
@@ -38,6 +42,8 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [language, setLanguage] = useState('en-US');
+  const [supportedLanguages, setSupportedLanguages] = useState<string[]>([]);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -53,7 +59,7 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
     const recognitionInstance = new SpeechRecognitionAPI();
     recognitionInstance.continuous = true;
     recognitionInstance.interimResults = true;
-    recognitionInstance.lang = 'en-US';
+    recognitionInstance.lang = language;
 
     recognitionInstance.onresult = (event: Event) => {
       const speechEvent = event as any; // Type assertion for compatibility
@@ -77,7 +83,7 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
         recognitionInstance.abort();
       }
     };
-  }, []);
+  }, [language]);
 
   const startListening = useCallback(() => {
     if (!recognition) return;
@@ -120,6 +126,9 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
     startListening,
     stopListening,
     resetTranscript,
-    setTranscript
+    setTranscript,
+    language,
+    setLanguage,
+    supportedLanguages
   };
 };
