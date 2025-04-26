@@ -1,9 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
 
+// Declare the SpeechRecognition interface for TypeScript
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: ((event: Event) => void) | null;
+  onerror: ((event: Event) => void) | null;
+}
+
+interface SpeechRecognitionConstructor {
+  new(): SpeechRecognition;
+}
+
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
+    SpeechRecognition: SpeechRecognitionConstructor;
+    webkitSpeechRecognition: SpeechRecognitionConstructor;
   }
 }
 
@@ -21,7 +37,7 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [recognition, setRecognition] = useState<any>(null);
+  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -39,16 +55,18 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
     recognitionInstance.interimResults = true;
     recognitionInstance.lang = 'en-US';
 
-    recognitionInstance.onresult = (event: any) => {
+    recognitionInstance.onresult = (event: Event) => {
+      const speechEvent = event as any; // Type assertion for compatibility
       let currentTranscript = '';
-      for (let i = 0; i < event.results.length; i++) {
-        currentTranscript += event.results[i][0].transcript;
+      for (let i = 0; i < speechEvent.results.length; i++) {
+        currentTranscript += speechEvent.results[i][0].transcript;
       }
       setTranscript(currentTranscript);
     };
 
-    recognitionInstance.onerror = (event: any) => {
-      setError(`Speech recognition error: ${event.error}`);
+    recognitionInstance.onerror = (event: Event) => {
+      const errorEvent = event as any; // Type assertion for compatibility
+      setError(`Speech recognition error: ${errorEvent.error}`);
       setIsListening(false);
     };
 
