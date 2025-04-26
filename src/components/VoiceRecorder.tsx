@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
-import { Mic, MicOff, Save, Search } from "lucide-react";
+import { Mic, MicOff, Save, Search, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import NoteEditor from "./NoteEditor";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -25,6 +25,7 @@ interface VoiceRecorderProps {
 const VoiceRecorder = ({ onNoteSaved, onSearch }: VoiceRecorderProps) => {
   const [showEditor, setShowEditor] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
   const { 
     transcript, 
     isListening, 
@@ -47,7 +48,7 @@ const VoiceRecorder = ({ onNoteSaved, onSearch }: VoiceRecorderProps) => {
 
   const handleSaveNote = () => {
     if (transcript.trim()) {
-      stopListening(); // Stop recording when opening the editor
+      stopListening();
       setShowEditor(true);
     }
   };
@@ -60,6 +61,8 @@ const VoiceRecorder = ({ onNoteSaved, onSearch }: VoiceRecorderProps) => {
   const handleNoteSaved = () => {
     setShowEditor(false);
     resetTranscript();
+    setShowSaveSuccess(true);
+    setTimeout(() => setShowSaveSuccess(false), 2000);
     onNoteSaved();
   };
 
@@ -74,7 +77,7 @@ const VoiceRecorder = ({ onNoteSaved, onSearch }: VoiceRecorderProps) => {
 
   return (
     <>
-      <Card className="p-4 mb-8">
+      <Card className="p-4 mb-8 transition-all duration-300 ease-in-out">
         <div className="flex flex-col space-y-4">
           <div className="flex justify-between items-center flex-wrap gap-2">
             <h2 className="text-xl font-semibold">Voice Notes</h2>
@@ -96,10 +99,10 @@ const VoiceRecorder = ({ onNoteSaved, onSearch }: VoiceRecorderProps) => {
                 <Button 
                   onClick={handleStopRecording}
                   variant="destructive"
-                  className="gap-2"
+                  className="gap-2 relative"
                 >
-                  <MicOff size={18} />
-                  Stop
+                  <MicOff size={18} className="relative z-10" />
+                  <span className="relative z-10">Stop</span>
                 </Button>
               ) : (
                 <Button 
@@ -107,7 +110,7 @@ const VoiceRecorder = ({ onNoteSaved, onSearch }: VoiceRecorderProps) => {
                   variant="default"
                   className="gap-2"
                 >
-                  <Mic size={18} />
+                  <Mic size={18} className={isListening ? "animate-pulse" : ""} />
                   Record
                 </Button>
               )}
@@ -131,7 +134,7 @@ const VoiceRecorder = ({ onNoteSaved, onSearch }: VoiceRecorderProps) => {
             </Alert>
           )}
 
-          <div className="relative min-h-[100px] p-4 border rounded-md bg-secondary/50">
+          <div className="relative min-h-[100px] p-4 border rounded-md bg-secondary/50 transition-all duration-300 ease-in-out">
             {isListening && (
               <div className="absolute -top-2 -right-2">
                 <span className="flex h-4 w-4">
@@ -140,26 +143,35 @@ const VoiceRecorder = ({ onNoteSaved, onSearch }: VoiceRecorderProps) => {
                 </span>
               </div>
             )}
-            <p className="whitespace-pre-wrap break-words">
+            <p className="whitespace-pre-wrap break-words transition-all duration-300">
               {transcript || (isListening ? "Speak now..." : "Click 'Record' and begin speaking...")}
             </p>
           </div>
           
-          <div className="flex justify-end">
+          <div className="flex justify-end items-center gap-2">
             <Button
               onClick={handleSaveNote}
               disabled={!transcript.trim()}
-              className="gap-2"
+              className="gap-2 relative"
             >
-              <Save size={18} />
-              Save as Note
+              {showSaveSuccess ? (
+                <>
+                  <Check size={18} className="text-green-500" />
+                  <span>Saved!</span>
+                </>
+              ) : (
+                <>
+                  <Save size={18} />
+                  <span>Save as Note</span>
+                </>
+              )}
             </Button>
           </div>
         </div>
       </Card>
       
       <Dialog open={showEditor} onOpenChange={setShowEditor}>
-        <DialogContent>
+        <DialogContent className="transition-all duration-300 ease-in-out">
           <DialogHeader>
             <DialogTitle>Create New Note</DialogTitle>
           </DialogHeader>
