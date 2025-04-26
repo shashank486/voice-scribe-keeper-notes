@@ -34,6 +34,7 @@ const VoiceRecorder = ({ onNoteSaved }: VoiceRecorderProps) => {
 
   const handleSaveNote = () => {
     if (transcript.trim()) {
+      stopListening(); // Stop recording when opening the editor
       setShowEditor(true);
     }
   };

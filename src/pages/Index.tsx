@@ -20,24 +20,34 @@ const Index = () => {
   
   return (
     <div className="container max-w-4xl py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Voice Scribe Notes</h1>
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+          VoiceScribe Pro
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          Transform your thoughts into text, instantly
+        </p>
+      </div>
       
       <VoiceRecorder onNoteSaved={loadNotes} />
       
-      {notes.length > 0 ? (
-        <div className="note-grid">
-          {notes.map(note => (
-            <NoteCard
-              key={note.id}
-              note={note}
-              onUpdated={loadNotes}
-              onDeleted={loadNotes}
-            />
-          ))}
-        </div>
-      ) : (
-        <EmptyNotes />
-      )}
+      <div className="mt-12">
+        <h2 className="text-2xl font-semibold mb-4">Your Notes</h2>
+        {notes.length > 0 ? (
+          <div className="note-grid">
+            {notes.map(note => (
+              <NoteCard
+                key={note.id}
+                note={note}
+                onUpdated={loadNotes}
+                onDeleted={loadNotes}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyNotes />
+        )}
+      </div>
     </div>
   );
 };

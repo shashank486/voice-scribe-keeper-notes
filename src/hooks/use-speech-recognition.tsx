@@ -1,5 +1,11 @@
-
 import { useState, useEffect, useCallback } from 'react';
+
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+}
 
 interface SpeechRecognitionHook {
   transcript: string;
@@ -11,34 +17,18 @@ interface SpeechRecognitionHook {
   setTranscript: (text: string) => void;
 }
 
-interface SpeechRecognitionConstructor {
-  new (): SpeechRecognition;
-}
-
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-  onerror: (event: SpeechRecognitionErrorEvent) => void;
-  onresult: (event: SpeechRecognitionEvent) => void;
-}
-
-// Handle browser compatibility
-const SpeechRecognitionAPI = 
-  window.SpeechRecognition || 
-  (window as any).webkitSpeechRecognition;
-
 export const useSpeechRecognition = (): SpeechRecognitionHook => {
   const [transcript, setTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [recognition, setRecognition] = useState<any>(null);
 
   // Initialize speech recognition
   useEffect(() => {
+    const SpeechRecognitionAPI = 
+      window.SpeechRecognition || 
+      window.webkitSpeechRecognition;
+
     if (!SpeechRecognitionAPI) {
       setError('Speech recognition is not supported in your browser.');
       return;
@@ -49,7 +39,7 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
     recognitionInstance.interimResults = true;
     recognitionInstance.lang = 'en-US';
 
-    recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
+    recognitionInstance.onresult = (event: any) => {
       let currentTranscript = '';
       for (let i = 0; i < event.results.length; i++) {
         currentTranscript += event.results[i][0].transcript;
@@ -57,14 +47,13 @@ export const useSpeechRecognition = (): SpeechRecognitionHook => {
       setTranscript(currentTranscript);
     };
 
-    recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognitionInstance.onerror = (event: any) => {
       setError(`Speech recognition error: ${event.error}`);
       setIsListening(false);
     };
 
     setRecognition(recognitionInstance);
 
-    // Cleanup
     return () => {
       if (recognitionInstance) {
         recognitionInstance.abort();
