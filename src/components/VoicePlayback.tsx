@@ -22,6 +22,10 @@ export default function VoicePlayback({ text, language = 'en-US' }: VoicePlaybac
     const speech = new SpeechSynthesisUtterance(text);
     speech.lang = language;
     
+    // Make speech more calm and slow by reducing rate and pitch
+    speech.rate = 0.85; // Slower rate (default is 1)
+    speech.pitch = 0.95; // Slightly lower pitch for calmer tone
+    
     speech.onend = () => {
       setIsPlaying(false);
     };

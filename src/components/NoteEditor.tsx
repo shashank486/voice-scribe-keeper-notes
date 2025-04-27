@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Note, CATEGORIES, SPEECH_LANGUAGES } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { saveNote, updateNote, generateTitle } from "@/lib/store";
+import { saveNote, updateNote } from "@/lib/store";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Select,
@@ -37,32 +37,10 @@ const NoteEditor = ({
   const [category, setCategory] = useState(initialNote?.category || "Other");
   const [isPinned, setIsPinned] = useState(initialNote?.isPinned || false);
   const [language, setLanguage] = useState(initialNote?.language || initialLanguage);
-  const [userEditedTitle, setUserEditedTitle] = useState(!!initialNote?.title);
   const isEditing = !!initialNote;
 
-  // Auto-generate title only when content changes AND user hasn't manually edited the title
-  useEffect(() => {
-    if (!isEditing && content && !userEditedTitle && !title) {
-      const generatedTitle = generateTitle(content);
-      setTitle(generatedTitle);
-    }
-  }, [content, isEditing, title, userEditedTitle]);
-
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
-    setUserEditedTitle(true);
-  };
-
   const handleSave = () => {
-    if (!title.trim()) {
-      toast({
-        title: "Title required",
-        description: "Please enter a title for your note",
-        variant: "destructive"
-      });
-      return;
-    }
-
+    // Allow empty title - we'll use content timestamp if needed
     if (!content.trim()) {
       toast({
         title: "Content required",
@@ -72,14 +50,29 @@ const NoteEditor = ({
       return;
     }
 
+    // Use empty string as title if none is provided
+    const finalTitle = title.trim() || new Date().toLocaleTimeString();
+
     if (isEditing && initialNote) {
-      updateNote(initialNote.id, { title, content, category, isPinned, language });
+      updateNote(initialNote.id, { 
+        title: finalTitle, 
+        content, 
+        category, 
+        isPinned, 
+        language 
+      });
       toast({
         title: "Note updated",
         description: "Your changes have been saved"
       });
     } else {
-      saveNote({ title, content, category, isPinned, language });
+      saveNote({ 
+        title: finalTitle, 
+        content, 
+        category, 
+        isPinned, 
+        language 
+      });
       toast({
         title: "Note saved",
         description: "Your new note has been created"
@@ -101,9 +94,9 @@ const NoteEditor = ({
     <div className="space-y-4 py-4">
       <div className="space-y-2">
         <Input
-          placeholder="Note title"
+          placeholder="Note title (optional)"
           value={title}
-          onChange={handleTitleChange}
+          onChange={(e) => setTitle(e.target.value)}
         />
       </div>
       <div className="space-y-2">
