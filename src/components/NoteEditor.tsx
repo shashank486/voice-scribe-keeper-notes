@@ -37,15 +37,21 @@ const NoteEditor = ({
   const [category, setCategory] = useState(initialNote?.category || "Other");
   const [isPinned, setIsPinned] = useState(initialNote?.isPinned || false);
   const [language, setLanguage] = useState(initialNote?.language || initialLanguage);
+  const [userEditedTitle, setUserEditedTitle] = useState(!!initialNote?.title);
   const isEditing = !!initialNote;
 
-  // Auto-generate title when content changes and no title has been manually set
+  // Auto-generate title only when content changes AND user hasn't manually edited the title
   useEffect(() => {
-    if (!isEditing && content && !title) {
+    if (!isEditing && content && !userEditedTitle && !title) {
       const generatedTitle = generateTitle(content);
       setTitle(generatedTitle);
     }
-  }, [content, isEditing, title]);
+  }, [content, isEditing, title, userEditedTitle]);
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTitle(e.target.value);
+    setUserEditedTitle(true);
+  };
 
   const handleSave = () => {
     if (!title.trim()) {
@@ -97,7 +103,7 @@ const NoteEditor = ({
         <Input
           placeholder="Note title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={handleTitleChange}
         />
       </div>
       <div className="space-y-2">
